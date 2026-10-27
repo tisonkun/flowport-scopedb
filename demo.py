@@ -116,17 +116,17 @@ def login(flowport):
     flowport.headers["X-CSRF-Token"] = session["csrf"]
 
 
-def configure(flowport, destination, source_token):
-    flowport.request("PUT", f"/destinations/{FLOW_ID}", destination)
+def configure(flowport, destination, source_token, flow_id=FLOW_ID, name="Direct HTTP to ScopeDB"):
+    flowport.request("PUT", f"/destinations/{flow_id}", destination)
     try:
-        previous = flowport.request("GET", f"/flows/{FLOW_ID}")
+        previous = flowport.request("GET", f"/flows/{flow_id}")
     except APIError as error:
         if error.status != 404:
             raise
         previous = {}
-    draft = flowport.request("PUT", f"/flows/{FLOW_ID}", {
-        "id": FLOW_ID,
-        "name": "Direct HTTP to ScopeDB",
+    draft = flowport.request("PUT", f"/flows/{flow_id}", {
+        "id": flow_id,
+        "name": name,
         "revision": previous.get("revision", 0),
         "draft_revision": previous.get("draft_revision", 0),
         "source": {"type": "http_server", "config": {
@@ -137,15 +137,15 @@ def configure(flowport, destination, source_token):
             'set_tag("env", env)',
             'set_tag("demo_run", demo_run)',
         ])},
-        "destination_ids": [FLOW_ID],
+        "destination_ids": [flow_id],
         "queue_bytes": 16777216,
     })
-    published = flowport.request("POST", f"/flows/{FLOW_ID}/publish", {
+    published = flowport.request("POST", f"/flows/{flow_id}/publish", {
         "draft_revision": draft["draft_revision"]
     })
 
     def installed():
-        deployment = flowport.request("GET", f"/flows/{FLOW_ID}/deployment")
+        deployment = flowport.request("GET", f"/flows/{flow_id}/deployment")
         workers = [worker for worker in deployment["workers"] if worker["desired"]]
         if deployment["status"] == "running" and workers and all(
             worker["installed"] == published["revision"] for worker in workers
@@ -179,6 +179,8 @@ def verify_rows(rows, events):
 
 def run(args):
     cloud = args.mode == "cloud"
+    if not cloud and not os.environ.get("SCOPEDB_IMAGE"):
+        raise ValueError("Local mode requires SCOPEDB_IMAGE with an authorized ScopeDB 0.6.0 image")
     endpoint = os.environ.get("SCOPEDB_ENDPOINT", "") if cloud else "http://127.0.0.1:19083"
     api_key = os.environ.get("SCOPEDB_API_KEY", "") if cloud else ""
     if cloud:
@@ -256,7 +258,7 @@ def run(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("local", "cloud"), default="local")
+    parser.add_argument("--mode", choices=("local", "cloud"), default="cloud")
     parser.add_argument("--compression", choices=("none", "gzip"), default="gzip")
     args = parser.parse_args()
     try:

@@ -7,6 +7,8 @@ services:
       dockerfile: flowport.Dockerfile
     environment:
       COLLECTWAY_ADMIN_PASSWORD: ${FLOWPORT_ADMIN_PASSWORD:-local-demo-password}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:19080:8080"
       - "127.0.0.1:19081:8081"
@@ -15,7 +17,7 @@ services:
 
   scopedb:
     profiles: [local]
-    image: ghcr.io/scopedb/scopedb:v0.6.0
+    image: ${SCOPEDB_IMAGE:-scopedb-local:demo}
     command: [start, -c, /etc/scopedb.toml, --create-nodegroup]
     ports:
       - "127.0.0.1:19083:6543"
