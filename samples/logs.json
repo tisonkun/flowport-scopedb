@@ -1,0 +1,23 @@
+[
+  {
+    "event_id": "18446744073709551615",
+    "service": "checkout",
+    "env": "production",
+    "message": "payment completed",
+    "duration_ms": 42
+  },
+  {
+    "event_id": "payment-002",
+    "service": "checkout",
+    "env": "production",
+    "message": "payment gateway timed out",
+    "duration_ms": 1500
+  },
+  {
+    "event_id": "search-003",
+    "service": "search",
+    "env": "staging",
+    "message": "search completed",
+    "duration_ms": 17
+  }
+]

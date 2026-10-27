@@ -1,0 +1,15 @@
+[meta]
+service_url = "postgres://scopedb:local-demo-password@postgres:5432/scopedb_meta"
+
+[server.http]
+listen_addr = "0.0.0.0:6543"
+
+[storage]
+type = "s3"
+bucket = "demo-bucket"
+region = "us-east-1"
+prefix = "/"
+endpoint = "http://minio:9000"
+access_key_id = "local-demo"
+secret_access_key = "local-demo-password"
+virtual_host_style = false

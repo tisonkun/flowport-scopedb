@@ -1,0 +1,59 @@
+name: flowport-scopedb-demo
+
+services:
+  flowport:
+    build:
+      context: .
+      dockerfile: flowport.Dockerfile
+    environment:
+      COLLECTWAY_ADMIN_PASSWORD: ${FLOWPORT_ADMIN_PASSWORD:-local-demo-password}
+    ports:
+      - "127.0.0.1:19080:8080"
+      - "127.0.0.1:19081:8081"
+    volumes:
+      - flowport-data:/data
+
+  scopedb:
+    profiles: [local]
+    image: ghcr.io/scopedb/scopedb:v0.6.0
+    command: [start, -c, /etc/scopedb.toml, --create-nodegroup]
+    ports:
+      - "127.0.0.1:19083:6543"
+    volumes:
+      - ./scopedb.toml:/etc/scopedb.toml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  postgres:
+    profiles: [local]
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: scopedb
+      POSTGRES_PASSWORD: local-demo-password
+      POSTGRES_DB: scopedb_meta
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U scopedb -d scopedb_meta]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  minio:
+    profiles: [local]
+    image: minio/minio:RELEASE.2024-07-16T23-46-41Z
+    entrypoint: [/bin/sh, -c]
+    command: ["mkdir -p /data/demo-bucket && exec minio server /data"]
+    environment:
+      MINIO_ROOT_USER: local-demo
+      MINIO_ROOT_PASSWORD: local-demo-password
+    volumes:
+      - minio-data:/data
+
+volumes:
+  flowport-data:
+  postgres-data:
+  minio-data:

@@ -1,0 +1,13 @@
+{
+  "id": "scopedb-http-demo",
+  "name": "ScopeDB HTTP demo",
+  "type": "http",
+  "config": {
+    "url": "https://<endpoint>/v1/databases/scopedb/schemas/public/tables/flowport_demo_points/rows",
+    "token": "<api-key>",
+    "method": "POST",
+    "encoding": "ndjson",
+    "compression": "gzip",
+    "timeout_seconds": 20
+  }
+}
